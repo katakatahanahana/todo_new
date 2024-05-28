@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-final List<String> entries = <String>['A', 'B', 'C'];
+final List<String> entries = <String>[];
 
 void main() {
   runApp(const MyApp());
@@ -38,15 +38,37 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         centerTitle: true,
         backgroundColor: Colors.blue,
-        title: Text('Todo List'),
+        title: const Text('Todo List'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              // アイコンが押された時の処理をここに書きます
+              setState(() {
+                entries.add('New Entry ${entries.length + 1}');
+              });
+            },
+          ),
+          const Padding(padding: EdgeInsets.symmetric(horizontal: 8)),
+        ],
       ),
       body: ListView.separated(
         padding: const EdgeInsets.all(8),
         itemCount: entries.length,
         itemBuilder: (BuildContext context, int index) {
-          return Container(
-            height: 50,
-            child: Center(child: Text(entries[index])),
+          return ListTile(
+            title: Text(
+              entries[index],
+              textAlign: TextAlign.left,
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () {
+                setState(() {
+                  entries.removeAt(index);
+                });
+              },
+            ),
           );
         },
         separatorBuilder: (BuildContext context, int index) => const Divider(),
