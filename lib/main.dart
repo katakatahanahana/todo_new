@@ -32,6 +32,46 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final TextEditingController _textFieldController = TextEditingController();
+
+  // プラスボタンを押したときに呼ばれる関数
+  void addItem() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('タスクを入力'),
+          content: TextField(
+            controller: _textFieldController,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              // labelText: 'Enter your item',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('キャンセル'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('追加'),
+              onPressed: () {
+                setState(() {
+                  if (_textFieldController.text.isNotEmpty)
+                    entries.add(_textFieldController.text);
+                });
+                _textFieldController.clear();
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,12 +82,7 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
-              // アイコンが押された時の処理をここに書きます
-              setState(() {
-                entries.add('New Entry ${entries.length + 1}');
-              });
-            },
+            onPressed: addItem, // プラスボタンを押したときにaddItem関数を呼び出し
           ),
           const Padding(padding: EdgeInsets.symmetric(horizontal: 8)),
         ],
