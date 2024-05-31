@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 void main() {
   runApp(const MyApp());
@@ -30,21 +32,47 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final List<Map<String, String>> entries = [];
+  List<Map<String, String>> entries = [];
   final TextEditingController _descriptionController = TextEditingController();
   String _selectedTitle = '大学';
   String _selectedCategory = '全部';
 
-  // プラスボタンを押したときに呼ばれる関数
+  @override
+  void initState() {
+    super.initState();
+    _loadEntries();
+  }
+
+  //shared_preferencesからデータを取得
+  Future<void> _loadEntries() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? entriesString = prefs.getString('entries');
+    if (entriesString != null) {
+      setState(() {
+        entries = List<Map<String, String>>.from(
+          json
+              .decode(entriesString)
+              .map((entry) => Map<String, String>.from(entry)),
+        );
+      });
+    }
+  }
+
+  //shared_preferencesにデータを保存
+  Future<void> _saveEntries() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('entries', json.encode(entries)); // データを保存
+  }
+
+  //追加ボタンを押したときの処理
   void addItem() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        // use StatefulBuilder to ensure the dropdown updates within the dialog
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('タスクを追加'),
+              title: const Text('タスク追加'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -87,6 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         'title': _selectedTitle,
                         'description': _descriptionController.text,
                       });
+                      _saveEntries(); // データの保存
                     });
                     _descriptionController.clear();
                     Navigator.of(context).pop();
@@ -111,7 +140,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: Colors.blue,
+        backgroundColor: Color(0xFFFFC6E2),
         title: DropdownButton<String>(
           value: _selectedCategory,
           items: <String>['全部', '大学', '課題', 'サークル'].map((String value) {
@@ -134,30 +163,37 @@ class _MyHomePageState extends State<MyHomePage> {
           const Padding(padding: EdgeInsets.symmetric(horizontal: 8)),
         ],
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(8),
-        itemCount: filteredEntries.length,
-        itemBuilder: (BuildContext context, int index) {
-          return ListTile(
-            title: Text(
-              filteredEntries[index]['title']!,
-              textAlign: TextAlign.left,
-            ),
-            subtitle: Text(
-              filteredEntries[index]['description']!,
-              textAlign: TextAlign.left,
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: () {
-                setState(() {
-                  entries.removeAt(entries.indexOf(filteredEntries[index]));
-                });
-              },
-            ),
-          );
-        },
-        separatorBuilder: (BuildContext context, int index) => const Divider(),
+      body: Column(
+        children: [
+          ListView.separated(
+            shrinkWrap: true,
+            padding: const EdgeInsets.all(8),
+            itemCount: filteredEntries.length,
+            itemBuilder: (BuildContext context, int index) {
+              return ListTile(
+                title: Text(
+                  filteredEntries[index]['title']!,
+                  textAlign: TextAlign.left,
+                ),
+                subtitle: Text(
+                  filteredEntries[index]['description']!,
+                  textAlign: TextAlign.left,
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    setState(() {
+                      entries.removeAt(entries.indexOf(filteredEntries[index]));
+                      _saveEntries(); // データの保存
+                    });
+                  },
+                ),
+              );
+            },
+            separatorBuilder: (BuildContext context, int index) =>
+                const Divider(),
+          ),
+        ],
       ),
     );
   }
